@@ -8,7 +8,7 @@ from torchvision import transforms
 import random
 import numpy as np
 import pandas as pd
-
+from skimage.transform import resize
 
 
 class NaiveFaceDataset(Dataset):
@@ -57,7 +57,7 @@ class NaiveFaceDataset(Dataset):
             
     def __len__(self):
         
-        return len(os.listdir(self.root_dir))
+        return len(self.df)
     
 class NaiveScale(object):
     """Convert ndarrays in sample to Tensors."""
@@ -94,24 +94,23 @@ class NaiveToTensor(object):
     
 class FaceDataset(Dataset):
 
-    def __init__(self, root_dir, csv_name, transform = None):
+    def __init__(self, root_dir,dataframe, transform = None):
         #num_triplets = batch size 128
         
         self.root_dir=root_dir
-        self.df=pd.read_csv(csv_name)
+        self.df=pd.read_csv(dataframe)
         self.label_set=set(self.df.Label.unique())
         self.transform=transform
         
     
     def __getitem__(self, idx):
         
-        label=self.df.iloc[idx,1]
-        path=os.path.join(self.root_dir,self.df.iloc[idx,0])
+        label=self.df.Label.iloc[idx]
+        path=os.path.join(self.root_dir,str(self.df.ID.iloc[idx]))
         image=imread(path,as_gray=True)
         image=resize(image,(128,128))
-        image=np.expand_dims(image,axis=2)
         
-        
+    
         
         
         sample = {'image': image, 'label':label}
@@ -122,7 +121,7 @@ class FaceDataset(Dataset):
             
     def __len__(self):
         
-        return len(os.listdir(self.root_dir))
+        return len(self.df)
     
 class Scale(object):
     """Convert ndarrays in sample to Tensors."""
@@ -144,13 +143,14 @@ class ToTensor(object):
         # swap color axis because
         # numpy image: H x W x C
         # torch image: C X H X W
-        
+        image=np.expand_dims(image,axis=2)
         image=image.transpose((2, 0, 1))
         
         
         
         return {'image': torch.from_numpy(image).type(torch.FloatTensor),
-                'label':torch.tensor(pos_image).type(torch.FloatTensor)}
+                'label':torch.tensor(label).type(torch.FloatTensor)}
+    
     
 
 
