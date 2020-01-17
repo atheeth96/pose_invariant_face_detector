@@ -13,10 +13,14 @@ app/__pycache__/
 *.jpeg
 *.sql
 *.sqlite
+
+#Folders 
 Train/
 train/
 test/
 img_align_celeba/
+*model*
+
 # OS generated files #
 ######################
 .DS_Store
