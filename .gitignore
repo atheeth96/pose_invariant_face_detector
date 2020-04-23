@@ -13,11 +13,14 @@ app/__pycache__/
 *.jpeg
 *.sql
 *.sqlite
-
+*.pth
+*.pt
 #Folders 
 Train/
 train/
 test/
+improv_comp/
+fmnist_2/
 img_align_celeba/
 *model*
 

@@ -109,6 +109,7 @@ class FaceDataset(Dataset):
         path=os.path.join(self.root_dir,str(self.df.ID.iloc[idx]))
         image=imread(path,as_gray=True)
         image=resize(image,(128,128))
+        print(label)
         
     
         
