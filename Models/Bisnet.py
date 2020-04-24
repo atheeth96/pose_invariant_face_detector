@@ -306,6 +306,34 @@ class BiSeNet(nn.Module):
         feat_out = F.interpolate(feat_out, (H, W), mode='bilinear', align_corners=True)
         feat_out16 = F.interpolate(feat_out16, (H, W), mode='bilinear', align_corners=True)
         feat_out32 = F.interpolate(feat_out32, (H, W), mode='bilinear', align_corners=True)
-        return feat_out, feat_out16, feat_out32
+        face_skin,face_features,hair=get_masks(feat_out)
+        
+        return feat_out, feat_out16, feat_out32,[face_skin,face_features,hair]
+    
+    
+def get_masks(temp):
+    parsing = torch.argmax(temp.squeeze(0),0)
+    
+    all_features=torch.zeros_like(parsing)
+    face_features=torch.zeros_like(parsing)
+    
+    for i in range(len(torch.unique(parsing))+1):
 
+        temp2=torch.zeros_like(parsing)
+        temp2[torch.where(parsing==i)]=1
+
+        if i in [2,3,4,5,10,12,13]:
+            face_features+=temp2 
+        if i!=0:
+            all_features+=temp2
+        if i==0:
+            bg=temp2
+        if i==1:
+            face_skin=temp2
+            
+    hair=(1-bg-all_features)
+    hair[torch.where(hair<0)]=1
+            
+    return face_skin,face_features,hair
+    
  
