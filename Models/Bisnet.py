@@ -5,6 +5,7 @@ import torchvision
 import torch.utils.model_zoo as modelzoo
 from skimage.transform import rescale, resize, downscale_local_mean
 import numpy as np
+import torch.nn.functional as F
 
 # from modules.bn import InPlaceABNSync as BatchNorm2d
 
@@ -312,6 +313,7 @@ class BiSeNet(nn.Module):
     
     
 def get_masks(temp):
+    temp=F.interpolate(temp,256)
     parsing = torch.argmax(temp.squeeze(0),0)
     
     all_features=torch.zeros_like(parsing)
@@ -333,6 +335,9 @@ def get_masks(temp):
             
     hair=(1-bg-all_features)
     hair[torch.where(hair<0)]=1
+    
+    
+    
             
     return face_skin,face_features,hair
     

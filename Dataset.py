@@ -53,6 +53,10 @@ class Scale(object):
     def __call__(self,sample):
         input_image, gt_image= sample['input_image'], sample['gt_image']
 #         image_max=np.amax(image)
+
+        input_image=(resize(input_image,(256,256,3))*255).astype(np.uint8)
+        gt_image=(resize(gt_image,(256,256,3))*255).astype(np.uint8)
+        
         input_image=input_image/255
         gt_image=gt_image/255
         
@@ -91,6 +95,7 @@ def visualize_loader(loader,index=0):
             gt_image=(sample['gt_image'][index]).numpy()
             
             print("MAX VALUE : ","\ninput_image",np.amax(input_image),"\ngt_image",np.amax(gt_image))
+            print("IMG SIZE : ","\ninput_image",input_image.shape,"\ngt_image",gt_image.shape)
             
             
             input_image=input_image.transpose(1,2,0)
