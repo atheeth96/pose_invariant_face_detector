@@ -17,6 +17,7 @@ app/__pycache__/
 *.pth
 *.pt
 #Folders 
+.ipynb_checkpoints/
 Train/
 train/
 test/
