@@ -13,8 +13,53 @@ resnet18_url = 'https://download.pytorch.org/models/resnet18-5c106cde.pth'
 
 
 
+def re_normalize_batch(tensor_batch,mean1=[-1,-1,-1],std1=[1/0.5,1/0.5,1/0.5],\
+                      mean2=[0.485, 0.456, 0.406],std2=[0.229, 0.224, 0.225]):
+    device = torch.device("cuda:0" if tensor_batch.is_cuda else "cpu")
+    BATCH_SIZE=tensor_batch.size()[0]
+    mean1=torch.tensor(mean1).to(device).repeat(BATCH_SIZE,1)
+    mean1=mean1.view(BATCH_SIZE,3,1,1)
+    std1=torch.tensor(std1).to(device).repeat(BATCH_SIZE,1)
+    std1=std1.view(BATCH_SIZE,3,1,1)
+    mean2=torch.tensor(mean2).to(device).repeat(BATCH_SIZE,1)
+    mean2=mean2.view(BATCH_SIZE,3,1,1)
+    std2=torch.tensor(std2).to(device).repeat(BATCH_SIZE,1)
+    std2=std2.view(BATCH_SIZE,3,1,1)
+    
+    tensor_batch=(tensor_batch-mean1)/std1
+    tensor_batch=(tensor_batch-mean2)/std2
+    
+    
+    return tensor_batch
 
 
+class  ParserMaps(nn.Module):
+    def __init__(self,model):
+        super().__init__()
+        
+        for param in model.parameters():
+            param.requires_grad = False
+        
+        self.parser_network = model.to('cuda')
+        
+
+    def forward(self,out_images):
+        
+        out_images=re_normalize_batch(out_images)
+        
+        
+        out_x,out_y,out_z = self.parser_network(out_images)
+        
+        out_x,out_y,out_z=torch.unsqueeze(out_x,dim=1).repeat(1,out_images.size()[1],1,1),\
+        torch.unsqueeze(out_y,dim=1).repeat(1,out_images.size()[1],1,1),\
+        torch.unsqueeze(out_z,dim=1).repeat(1,out_images.size()[1],1,1)
+        
+        feat_x=out_x*out_images
+        feat_y=out_y*out_images
+        feat_z=out_z*out_images
+        return feat_x,feat_y,feat_z
+    
+    
 def vis_parsing_maps(im, parsing_anno):
     # Colors for all 20 parts
     part_colors = [[255, 0, 0], [255, 85, 0], [255, 170, 0],
@@ -309,12 +354,14 @@ class BiSeNet(nn.Module):
         feat_out32 = F.interpolate(feat_out32, (H, W), mode='bilinear', align_corners=True)
         face_skin,face_features,hair=get_masks(feat_out)
         
-        return feat_out, feat_out16, feat_out32,[face_skin,face_features,hair]
+        
+#         return feat_out, feat_out16, feat_out32,[face_skin,face_features,hair]
+        return face_skin,face_features,hair
     
     
 def get_masks(temp):
     temp=F.interpolate(temp,256)
-    parsing = torch.argmax(temp.squeeze(0),0)
+    parsing = torch.argmax(temp.squeeze(0),1)
     
     all_features=torch.zeros_like(parsing)
     face_features=torch.zeros_like(parsing)
@@ -336,9 +383,7 @@ def get_masks(temp):
     hair=(1-bg-all_features)
     hair[torch.where(hair<0)]=1
     
-    
-    
-            
+
     return face_skin,face_features,hair
     
  

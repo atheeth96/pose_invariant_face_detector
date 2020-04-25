@@ -62,6 +62,37 @@ class Scale(object):
         
         
         return {'input_image': input_image, 'gt_image':gt_image}
+    
+    
+class Normalize(object):
+    def __init__(self,mean, std):
+        self.mean=mean
+        self.std=std
+
+    def __call__(self, sample):
+        input_image, gt_image = sample['input_image'], sample['gt_image']
+        for i in range(input_image.shape[0]):
+
+            input_image[i,:,:]=(input_image[i,:,:]-self.mean[i])/self.std[i]
+            gt_image[i,:,:]=(gt_image[i,:,:]-self.mean[i])/self.std[i]
+        return {'input_image': input_image,
+        'gt_image': gt_image}
+    
+class ReNormalize(object):
+    def __init__(self,mean,std):
+        self.mean=mean
+        self.std=std
+
+    def __call__(self, gen_image):
+
+        for i in range(gen_image.shape[0]):
+
+            gen_image[i,:,:]=gen_image*self.std[i]+self.mean[i]
+            
+        gen_image=transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))(gen_image)
+            
+        return gen_image 
+    
 
 class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
@@ -94,12 +125,15 @@ def visualize_loader(loader,index=0):
             input_image=(sample['input_image'][index]).numpy()
             gt_image=(sample['gt_image'][index]).numpy()
             
-            print("MAX VALUE : ","\ninput_image",np.amax(input_image),"\ngt_image",np.amax(gt_image))
-            print("IMG SIZE : ","\ninput_image",input_image.shape,"\ngt_image",gt_image.shape)
+            print("MAX VALUE TENSOR: ","\ninput_image",np.max(input_image),"\ngt_image",np.max(gt_image))
+            print("MIN VALUE TENSOR: ","\ninput_image",np.min(input_image),"\ngt_image",np.min(gt_image))
+            print("TENSOR SIZE : ","\ninput_image",input_image.shape,"\ngt_image",gt_image.shape)
             
             
             input_image=input_image.transpose(1,2,0)
+            input_image=((input_image*0.5+0.5)*255).astype(np.uint8)
             
             gt_image=gt_image.transpose(1,2,0)
+            gt_image=((gt_image*0.5+0.5)*255).astype(np.uint8)
             
             return input_image,gt_image

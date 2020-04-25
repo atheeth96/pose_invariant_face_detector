@@ -19,3 +19,27 @@ class TVLoss(nn.Module):
     @staticmethod
     def tensor_size(t):
         return t.size()[1] * t.size()[2] * t.size()[3]
+    
+    
+class  DetectionLoss(nn.Module):
+    def __init__(self,model):
+        super().__init__()
+        
+        loss_network = model
+        for param in loss_network.parameters():
+            param.requires_grad = False
+        
+        self.loss_network = loss_network.to('cuda')
+        
+
+    def forward(self,out_images, target_images):
+        # Adversarial Loss
+        output_features = self.loss_network(out_images)
+        target_features = self.loss_network(target_images)
+        loss=torch.nn.L1Loss().to('cuda')(output_features,target_features)
+        
+        return loss
+    
+    
+
+    

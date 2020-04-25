@@ -4,33 +4,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 
-   
-        
-def save_model(model,optimizer,name,scheduler=None):
-    if scheduler==None:
-        checkpoint = {
-        'state_dict': model.state_dict(),
-        'optimizer' : optimizer.state_dict()}
-    else:
-        checkpoint = {
-        'state_dict': model.state_dict(),
-        'optimizer' : optimizer.state_dict(),
-        'scheduler' : scheduler.state_dict()}
-
-    torch.save(checkpoint,name)
-
-def load_model(filename,model,optimizer=None,scheduler=None):
-    checkpoint=torch.load(filename)
-    model.load_state_dict(checkpoint['state_dict'])
-    print("Done loading")
-    if  optimizer:
-        optimizer.load_state_dict(checkpoint['optimizer'])
-        print(optimizer.state_dict()['param_groups'][-1]['lr'],' : Learning rate')
-    if  scheduler:
-        scheduler.load_state_dict(checkpoint['optimizer'])
-        print(scheduler.state_dict()['param_groups'][-1]['lr'],' : Learning rate')
-        
-        
         
 class Resnet34Triplet(nn.Module):
     """Constructs a ResNet-34 model for FaceNet training using triplet loss.

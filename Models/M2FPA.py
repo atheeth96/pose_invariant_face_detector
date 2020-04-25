@@ -1,8 +1,14 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 from torch.nn import init
+
+
+def set_requires_grad(model, requires_grad=False):
+    for param in model.parameters():
+        param.requires_grad = requires_grad
 
 def save_model(model,optimizer,name,scheduler=None):
     if scheduler==None:
@@ -172,7 +178,7 @@ class Generator(nn.Module):
                                            activation=activation,stride=2,padding=1,bias=True,norm=norm)
         
         self.fc1=nn.Linear(131072, 512, bias=True)
-        self.maxout=Maxout(512,128,1)
+        self.maxout=Maxout(512,128,3)
         self.fc2=nn.Linear(128, 16384, bias=True)
         
         self.dec0_1=up_conv(64, 32, 4, stride=4,norm=norm,activation=activation)
@@ -193,7 +199,10 @@ class Generator(nn.Module):
 #         self.conv6=conv_block(128,32,kernel_size=3,activation=activation,stride=1,padding=1,bias=True,norm=norm)
         self.conv7=conv_block(139,3,kernel_size=5,activation=activation,stride=1,padding=2,bias=True,norm=norm)
         self.conv8=conv_block(3,3,kernel_size=3,activation=activation,stride=1,padding=1,bias=True,norm=norm)
-        self.conv9=conv_block(3,3,kernel_size=3,activation=activation,stride=1,padding=1,bias=True,norm=norm)
+        
+        self.conv9=nn.Conv2d(3, 3, kernel_size=3,stride=1,padding=1,bias=True)
+ 
+        self.final_act=nn.Tanh()
 
     def forward(self,x):
         batch_size=x.size()[0]
@@ -224,21 +233,21 @@ class Generator(nn.Module):
         x_temp = self.conv7(torch.cat((x_dec4,x0,x,x_dec0_3),dim=1))
         x_temp = self.conv8(x_temp)
         x = self.conv9(x_temp)
-
-        
+        x=self.final_act(x)
+  
         return x
     
     
 class Discriminator(nn.Module):
     def __init__(self,norm='batch',activation='relu'):
         super().__init__()
-        self.conv1=conv_block(ch_in=3,ch_out=64,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch')
-        self.conv2=conv_block(ch_in=64,ch_out=128,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch')
-        self.conv3=conv_block(ch_in=128,ch_out=256,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch')
-        self.conv4=conv_block(ch_in=256,ch_out=512,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch')
-        self.conv5=conv_block(ch_in=512,ch_out=512,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch')
-        self.conv6=conv_block(ch_in=512,ch_out=512,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch')
-        self.conv7=conv_block(ch_in=512,ch_out=1,kernel_size=1,activation='relu',stride=1,padding=0,bias=True,norm='batch')
+        self.conv1=conv_block(ch_in=3,ch_out=64,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm)
+        self.conv2=conv_block(ch_in=64,ch_out=128,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm)
+        self.conv3=conv_block(ch_in=128,ch_out=256,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm)
+        self.conv4=conv_block(ch_in=256,ch_out=512,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm)
+        self.conv5=conv_block(ch_in=512,ch_out=512,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm)
+        self.conv6=conv_block(ch_in=512,ch_out=512,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm)
+        self.conv7=nn.Conv2d(512,1, kernel_size=1,stride=1,padding=0,bias=True)
         
     def forward(self,x):
         
@@ -256,6 +265,8 @@ class Discriminator(nn.Module):
         
         x=self.conv7(x)
         
+        x=torch.sigmoid(x)
+        
         return x
     
 class ParserDiscriminator(nn.Module):
@@ -263,30 +274,30 @@ class ParserDiscriminator(nn.Module):
         super().__init__()
         
         self.feat_extractor_1=nn.Sequential(\
-                                            conv_block(ch_in=3,ch_out=64,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=64,ch_out=128,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=128,ch_out=256,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=256,ch_out=512,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=512,ch_out=512,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'))
+                                            conv_block(ch_in=3,ch_out=64,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=64,ch_out=128,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=128,ch_out=256,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=256,ch_out=512,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=512,ch_out=512,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm))
         
         self.feat_extractor_2=nn.Sequential(\
-                                            conv_block(ch_in=3,ch_out=64,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=64,ch_out=128,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=128,ch_out=256,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=256,ch_out=512,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=512,ch_out=512,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'))
+                                            conv_block(ch_in=3,ch_out=64,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=64,ch_out=128,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=128,ch_out=256,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=256,ch_out=512,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=512,ch_out=512,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm))
         
         self.feat_extractor_3=nn.Sequential(\
-                                            conv_block(ch_in=3,ch_out=64,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=64,ch_out=128,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=128,ch_out=256,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=256,ch_out=512,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=512,ch_out=512,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'))
+                                            conv_block(ch_in=3,ch_out=64,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=64,ch_out=128,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=128,ch_out=256,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=256,ch_out=512,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=512,ch_out=512,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm))
         
         self.fc=nn.Sequential(\
-                                            conv_block(ch_in=512*3,ch_out=512,kernel_size=3,activation='relu',stride=1,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=512,ch_out=512,kernel_size=3,activation='relu',stride=2,padding=1,bias=True,norm='batch'),\
-                                            conv_block(ch_in=512,ch_out=1,kernel_size=3,activation='relu',stride=1,padding=1,bias=True,norm='batch'))
+                                            conv_block(ch_in=512*3,ch_out=512,kernel_size=3,activation=activation,stride=1,padding=1,bias=True,norm=norm),\
+                                            conv_block(ch_in=512,ch_out=512,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm),\
+                                            nn.Conv2d(512, 1, kernel_size=3,stride=1,padding=1,bias=True))
         
     def forward(self,x,y,z):
         
@@ -294,8 +305,8 @@ class ParserDiscriminator(nn.Module):
         f2=self.feat_extractor_1(y)
         f3=self.feat_extractor_1(z)
         op=self.fc(torch.cat((f1,f2,f3),dim=1))
-        
-        
+        output=torch.sigmoid(op)
+
         return op
 
         
