@@ -329,8 +329,9 @@ class FeatureFusionModule(nn.Module):
 
 
 class BiSeNet(nn.Module):
-    def __init__(self, n_classes, *args, **kwargs):
+    def __init__(self, n_classes,res=256, *args, **kwargs):
         super(BiSeNet, self).__init__()
+        self.res=res
         self.cp = ContextPath()
         ## here self.sp is deleted
         self.ffm = FeatureFusionModule(256, 256)
@@ -352,15 +353,15 @@ class BiSeNet(nn.Module):
         feat_out = F.interpolate(feat_out, (H, W), mode='bilinear', align_corners=True)
         feat_out16 = F.interpolate(feat_out16, (H, W), mode='bilinear', align_corners=True)
         feat_out32 = F.interpolate(feat_out32, (H, W), mode='bilinear', align_corners=True)
-        face_skin,face_features,hair=get_masks(feat_out)
+        face_skin,face_features,hair=get_masks(feat_out,res=self.res)
         
         
 #         return feat_out, feat_out16, feat_out32,[face_skin,face_features,hair]
         return face_skin,face_features,hair
     
     
-def get_masks(temp):
-    temp=F.interpolate(temp,256)
+def get_masks(temp,res=256):
+    temp=F.interpolate(temp,res)
     parsing = torch.argmax(temp.squeeze(0),1)
     
     all_features=torch.zeros_like(parsing)

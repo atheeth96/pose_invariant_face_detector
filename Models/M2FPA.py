@@ -35,7 +35,7 @@ def load_model(filename,model,optimizer=None,scheduler=None):
         print(scheduler.state_dict()['param_groups'][-1]['lr'],' : Learning rate')
 
 
-def init_weights(net, init_type='normal', gain=0.02):
+def init_weights(net, init_type='xavier', gain=0.02):
     def init_func(m):
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
@@ -163,7 +163,7 @@ class up_conv(nn.Module):
     
     
 class Generator(nn.Module):
-    def __init__(self,norm='batch',activation='relu'):
+    def __init__(self,norm='batch',activation='lelu'):
         super().__init__()
         
         self.encoder_block_0=encoder_block(3,64,kernel_size=7,\
@@ -239,7 +239,7 @@ class Generator(nn.Module):
     
     
 class Discriminator(nn.Module):
-    def __init__(self,norm='batch',activation='relu'):
+    def __init__(self,norm='batch',activation='lelu'):
         super().__init__()
         self.conv1=conv_block(ch_in=3,ch_out=64,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm)
         self.conv2=conv_block(ch_in=64,ch_out=128,kernel_size=3,activation=activation,stride=2,padding=1,bias=True,norm=norm)
@@ -270,7 +270,7 @@ class Discriminator(nn.Module):
         return x
     
 class ParserDiscriminator(nn.Module):
-    def __init__(self,norm='batch',activation='relu'):
+    def __init__(self,norm='batch',activation='lelu'):
         super().__init__()
         
         self.feat_extractor_1=nn.Sequential(\
