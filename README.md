@@ -1,6 +1,6 @@
 
 # M2FPA
-M<sup>2<sup/>FPA: A Multi-Yaw Multi-Pitch High-Quality Dataset and Benchmark for
+M<sup>2</sup>FPA: A Multi-Yaw Multi-Pitch High-Quality Dataset and Benchmark for
 Facial Pose Analysis.<br/>
 
 There are some variation from proposed method. For instance here, a facenet based identity loss replaces the Light CNN lidentity loss.
