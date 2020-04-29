@@ -15,10 +15,12 @@ from skimage.transform import resize
     
 class Dataset(Dataset):
 
-    def __init__(self,dataframe, transform = None):
+    def __init__(self,dataframe,abs_path='/home/vahadaneabhi01/datalab/training-assets/R_medical/atheeth/M2FPA/'\
+                 , transform = None):
         #num_triplets = batch size 128
         
         self.df=pd.read_csv(dataframe)
+        self.abs_path=abs_path
         self.len=len(self.df)
         self.transform=transform
     
@@ -32,8 +34,8 @@ class Dataset(Dataset):
         
         label=self.df.iloc[idx,0]
         
-        input_path=self.df.iloc[idx,1]
-        gt_path=self.df.iloc[idx,2]
+        input_path=os.path.join(self.abs_path,self.df.iloc[idx,1])
+        gt_path=os.path.join(self.abs_path,self.df.iloc[idx,2])
         
         input_image=imread(input_path)
         gt_image=imread(gt_path)
@@ -77,6 +79,22 @@ class Normalize(object):
             gt_image[i,:,:]=(gt_image[i,:,:]-self.mean[i])/self.std[i]
         return {'input_image': input_image,
         'gt_image': gt_image}
+    
+    
+    
+class ToLmdb(object):
+   
+    def __call__(self, sample):
+        input_image, gt_image = sample['input_image'], sample['gt_image']
+        
+        input_image=np.expand_dims(input_image,axis=0)
+        gt_image=np.expand_dims(gt_image,axis=0)
+        
+        image=np.concatenate((input_image,gt_image),axis=0)
+        
+        return image
+                             
+                             
     
 class ReNormalize(object):
     def __init__(self,mean,std):
