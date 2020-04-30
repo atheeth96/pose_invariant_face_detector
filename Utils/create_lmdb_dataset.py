@@ -3,8 +3,6 @@ import sys
 sys.path.insert(1, '/home/vahadaneabhi01/datalab/training-assets/R_medical/atheeth/M2FPA')
 import os
 import re
-# from Datasets.Dataset import Dataset,Scale,ToTensor,visualize_loader,Normalize,ToLmdb
-# from torch.utils.data import DataLoader
 import argparse
 from io import BytesIO
 import multiprocessing
@@ -17,7 +15,33 @@ import numpy as np
 import lmdb
 from tqdm import tqdm
 import torchvision
-# from torchvision.transforms import functional as trans_fn
+
+
+
+
+
+def visulaize_lmdb(path='Train.lmdb',index=3):
+
+    env = lmdb.open(
+                path,
+                max_readers=32,
+                readonly=True,
+                lock=False,
+                readahead=False,
+                meminit=False,
+            )
+    with env.begin(write=False) as txn:
+        length = int(txn.get('length'.encode('utf-8')).decode('utf-8'))
+    print(length)
+    with env.begin(write=False) as txn:
+        key = '{}'.format(str(index).zfill(6)).encode('utf-8')
+        img_bytes = txn.get(key)
+
+    buffer = BytesIO(img_bytes)
+    img_re=np.load(buffer)
+    print(img_re.shape)
+    
+    return img_re[0],img_re[1]
 
 
 def convert(img, quality=100):
@@ -45,6 +69,9 @@ def resize_and_convert(input_path, size=(256,256,3)):
     input_image=(resize(input_image,size)*255).astype(np.uint8)
     gt_image=(resize(gt_image,size)*255).astype(np.uint8)
     
+    input_image=np.expand_dims(input_image,axis=0)
+    gt_image=np.expand_dims(gt_image,axis=0)
+    
     image=np.concatenate((input_image,gt_image),axis=0)
     
     buffer = BytesIO()
@@ -58,7 +85,7 @@ def prepare(path, path_list):
             
     with lmdb.open(path, map_size=1024 ** 4, readahead=False) as env:
         with env.begin(write=True) as txn:
-            with multiprocessing.Pool(8) as pool:
+            with multiprocessing.Pool(2) as pool:
                 loop=tqdm(enumerate(pool.imap_unordered(resize_and_convert, path_list)))
                 total = 0
                 for i, img in loop:
@@ -78,4 +105,4 @@ if __name__ == '__main__':
     df=pd.read_csv('../M2FPA_TRAIN.csv')
     path_list=df['input'].tolist()
     
-    prepare('../Train.lmdb', path_list)
+    prepare('../Train2.lmdb', path_list)

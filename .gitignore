@@ -6,9 +6,12 @@
 *__pycache*
 *.pyc
 app/__pycache__/
+*.lmdb
 Train.lmdb/
 #images
+*.ipynb
 *.png
+*core*
 *.jpg
 *.csv
 *.jpeg
