@@ -24,8 +24,8 @@ import skimage
 from skimage.io import imread,imsave
 # import matplotlib.pyplot as plt
 import numpy as np
-import tqdm as tqdm 
-from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm 
+# from torch.utils.tensorboard import SummaryWriter
 import torch.nn.functional as F
 import os
 import shutil
@@ -55,7 +55,7 @@ class color:
    END = '\033[0m'
     
     
-BATCH_SIZE=16
+BATCH_SIZE=8
 START_EPOCHS=0
 END_EPOCHS=10
 CRITIC_ITER=10
@@ -70,8 +70,8 @@ LAMBDA_ADV=1
 
 ############# Data loader ##################
 transform=torchvision.transforms.Compose([Scale(),ToTensor(),Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))])
-train_dataset=LmdbDataset('Train2.lmdb',transform)
-train_loader=DataLoader(train_dataset,batch_size=BATCH_SIZE,shuffle=True,num_workers=0)
+train_dataset=LmdbDataset('Train.lmdb',transform)
+train_loader=DataLoader(train_dataset,batch_size=BATCH_SIZE,shuffle=True,num_workers=2)
 NO_STEPS=train_dataset.__len__()//BATCH_SIZE
 print("NUMBER OF BATCHES : ",train_loader.__len__())
 
@@ -146,9 +146,9 @@ criterion_tv=TVLoss().to('cuda')
 
 
 
-optimizerG = torch.optim.Adam(modelG.parameters(),lr=10e-03, betas=(0.9, 0.98),weight_decay=0.02)
-optimizerD = torch.optim.SGD(modelD.parameters(),lr=10e-03, momentum=0.8,nesterov=True)
-optimizerD_parser = torch.optim.SGD(modelD_parser.parameters(),lr=10e-03, momentum=0.8,nesterov=True)
+optimizerG = torch.optim.Adam(modelG.parameters(),lr=2e-05, betas=(0.5, 0.98),weight_decay=0.02)
+optimizerD = torch.optim.Adam(modelG.parameters(),lr=2e-05, betas=(0.5, 0.98),weight_decay=0.02)
+optimizerD_parser = torch.optim.Adam(modelG.parameters(),lr=2e-05, betas=(0.5, 0.98),weight_decay=0.02)
 
 
 best_val=10e06
@@ -211,7 +211,7 @@ for epoch in range(START_EPOCHS,END_EPOCHS):
             loop.set_postfix(Pixel_loss=gen_pixel_loss,Detection_loss=gen_detect_score)
 
             
-            if (i+1)%500==0:
+            if (i+1)%1500==0:
 
                 img_train = torchvision.utils.make_grid(recon_front.detach().cpu()\
                                                         ,nrow=BATCH_SIZE//4,padding=40)

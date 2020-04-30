@@ -109,8 +109,8 @@ class Recurrent_block(nn.Module):
         super().__init__()
         
         self.ch_out = ch_in
-        self.conv1 = conv_block(ch_in,ch_in,kernel_size=3,activation='relu',stride=1,padding=1,bias=True,norm='batch')
-        self.conv2 = conv_block(ch_in,ch_in,kernel_size=3,activation='relu',stride=1,padding=1,bias=True,norm='batch')
+        self.conv1 = conv_block(ch_in,ch_in,kernel_size=3,activation='lrelu',stride=1,padding=1,bias=True,norm='batch')
+        self.conv2 = conv_block(ch_in,ch_in,kernel_size=3,activation='lrelu',stride=1,padding=1,bias=True,norm='batch')
 
     def forward(self,x):
         
@@ -121,7 +121,7 @@ class Recurrent_block(nn.Module):
 
     
 class encoder_block(nn.Module):
-    def __init__(self,ch_in,ch_out,kernel_size=3,activation='relu',stride=1,padding=1,bias=True,norm='batch'):
+    def __init__(self,ch_in,ch_out,kernel_size=3,activation='lrelu',stride=1,padding=1,bias=True,norm='batch'):
         super().__init__()
         
         self.ch_in = ch_in
@@ -139,7 +139,7 @@ class encoder_block(nn.Module):
         return x
 
 class up_conv(nn.Module):
-    def __init__(self,n_channels, out_channels, kernel_size, stride=1,norm='batch',activation='relu'):
+    def __init__(self,n_channels, out_channels, kernel_size, stride=1,norm='batch',activation='lrelu'):
         super().__init__()
         self.activations = nn.ModuleDict([
                 ['lrelu', nn.LeakyReLU()],
@@ -178,8 +178,8 @@ class Generator(nn.Module):
                                            activation=activation,stride=2,padding=1,bias=True,norm=norm)
         
         self.fc1=nn.Linear(131072, 512, bias=True)
-        self.maxout=Maxout(512,128,3)
-        self.fc2=nn.Linear(128, 16384, bias=True)
+        self.maxout=Maxout(512,256,3)
+        self.fc2=nn.Linear(256, 16384, bias=True)
         
         self.dec0_1=up_conv(64, 32, 4, stride=4,norm=norm,activation=activation)
         self.dec0_2=up_conv(32, 16, 2, stride=2,norm=norm,activation=activation)
@@ -197,10 +197,10 @@ class Generator(nn.Module):
         
 #         self.conv5=conv_block(256,64,kernel_size=3,activation=activation,stride=1,padding=1,bias=True,norm=norm)
 #         self.conv6=conv_block(128,32,kernel_size=3,activation=activation,stride=1,padding=1,bias=True,norm=norm)
-        self.conv7=conv_block(139,3,kernel_size=5,activation=activation,stride=1,padding=2,bias=True,norm=norm)
-        self.conv8=conv_block(3,3,kernel_size=3,activation=activation,stride=1,padding=1,bias=True,norm=norm)
+        self.conv7=conv_block(139,128,kernel_size=5,activation=activation,stride=1,padding=2,bias=True,norm=norm)
+        self.conv8=conv_block(128,64,kernel_size=3,activation=activation,stride=1,padding=1,bias=True,norm=norm)
         
-        self.conv9=nn.Conv2d(3, 3, kernel_size=3,stride=1,padding=1,bias=True)
+        self.conv9=nn.Conv2d(64, 3, kernel_size=3,stride=1,padding=1,bias=True)
  
         self.final_act=nn.Tanh()
 

@@ -78,10 +78,10 @@ class Normalize(object):
     def __call__(self, sample):
         input_image, gt_image = sample['input_image'], sample['gt_image']
         
-        mean=torch.tensor(self.mean).unsqueeze(1).unsqueeze(2)
+        mean=torch.tensor(self.mean,dtype=input_image.dtype).unsqueeze(1).unsqueeze(2)
         mean=mean.repeat((1,input_image.size()[1],input_image.size()[2]))
         
-        std=torch.tensor(self.std).unsqueeze(1).unsqueeze(2)
+        std=torch.tensor(self.std,dtype=input_image.dtype).unsqueeze(1).unsqueeze(2)
         std=std.repeat((1,input_image.size()[1],input_image.size()[2]))
   
         input_image=(input_image-mean)/std
@@ -98,10 +98,10 @@ class ReNormalize(object):
 
     def __call__(self, gen_image):
 
-        mean=torch.tensor(self.mean).unsqueeze(1).unsqueeze(2).unsqueeze(0)
+        mean=torch.tensor(self.mean,dtype=gen_image.dtype).unsqueeze(1).unsqueeze(2).unsqueeze(0)
         mean=mean.repeat((gen_image.size()[0],1,gen_image.size()[2],gen_image.size()[3]))
         
-        std=torch.tensor(self.std).unsqueeze(1).unsqueeze(2).unsqueeze(0)
+        std=torch.tensor(self.std,dtype=gen_image.dtype).unsqueeze(1).unsqueeze(2).unsqueeze(0)
         std=std.repeat((gen_image.size()[0],1,gen_image.size()[2],gen_image.size()[3]))
 
         gen_image=gen_image*std+mean

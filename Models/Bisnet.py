@@ -17,13 +17,13 @@ def re_normalize_batch(tensor_batch,mean1=[-1,-1,-1],std1=[1/0.5,1/0.5,1/0.5],\
                       mean2=[0.485, 0.456, 0.406],std2=[0.229, 0.224, 0.225]):
     device = torch.device("cuda:0" if tensor_batch.is_cuda else "cpu")
     BATCH_SIZE=tensor_batch.size()[0]
-    mean1=torch.tensor(mean1).to(device).repeat(BATCH_SIZE,1)
+    mean1=torch.tensor(mean1,dtype=tensor_batch.dtype).to(device).repeat(BATCH_SIZE,1)
     mean1=mean1.view(BATCH_SIZE,3,1,1)
-    std1=torch.tensor(std1).to(device).repeat(BATCH_SIZE,1)
+    std1=torch.tensor(std1,dtype=tensor_batch.dtype).to(device).repeat(BATCH_SIZE,1)
     std1=std1.view(BATCH_SIZE,3,1,1)
-    mean2=torch.tensor(mean2).to(device).repeat(BATCH_SIZE,1)
+    mean2=torch.tensor(mean2,dtype=tensor_batch.dtype).to(device).repeat(BATCH_SIZE,1)
     mean2=mean2.view(BATCH_SIZE,3,1,1)
-    std2=torch.tensor(std2).to(device).repeat(BATCH_SIZE,1)
+    std2=torch.tensor(std2,dtype=tensor_batch.dtype).to(device).repeat(BATCH_SIZE,1)
     std2=std2.view(BATCH_SIZE,3,1,1)
     
     tensor_batch=(tensor_batch-mean1)/std1
